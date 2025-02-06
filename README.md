@@ -1,55 +1,103 @@
--- Voidqzxy Hub Auto Farm Script para Dragon Blox Ultimate
 
--- Configuração inicial
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
+local UI = Material.Load({Title = "Voidqzxy Hub| {}#0001", Style = 1, SizeX = 250, SizeY = 250, Theme = "Mocha"})
 
--- Criar GUI
-local ScreenGui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local AutoFarmButton = Instance.new("TextButton")
+-- Tabs
+local Início = UI.New({Title = "Início"})
+-- 
+local plr = game.Players.LocalPlayer
+local RunService = game:GetService('RunService')
+local questRemote = game:GetService("ReplicatedStorage").Package.Events.Qaction 
+local punchRemote = game:GetService("ReplicatedStorage").Package.Events.p
+local equipRemote = game:GetService("ReplicatedStorage").Package.Events.equipskill
+local rebirthRemote = game:GetService("ReplicatedStorage").Package.Events.reb
 
-ScreenGui.Name = "VoidqzxyHub"
-ScreenGui.Parent = game.CoreGui
+local Settings = {Tables = {Forms = {'SSJB4','True God of Creation','True God of Destruction','Super Broly','LSSJG','LSSJ4','SSJG4','LSSJ3','SSJ5','Mystic Kaioken','LSSJ Kaioken','SSJ2 Kaioken','SSJR3','SSJB3','God Of Destruction','God Of Creation','Jiren Ultra Instinct', 'Mastered Ultra Instinct','Godly SSJ2', 'Ultra Instinct Omen', 'Evil SSJ','Blue Evolution','Dark Rose','Kefla SSJ2','SSJ Berserker','True Rose','Beast','Instinto Astral','LBSSJ4',SSJBUI','Ultra Ego','SSJB Kaioken','SSJ Rose', 'SSJ Blue','Corrupt SSJ','SSJ Rage','SSJG','SSJ4','Mystic','LSSJ','SSJ3','Spirit SSJ','SSJ2 Majin','SSJ2','SSJ Kaioken','SSJ','FSSJ','Kaioken'}};Variables = {Farm = false}}
+setmetatable(Settings, {__index = function() warn('Dumbass') end}) -- literally no use i was just bored
 
-Frame.Size = UDim2.new(0, 200, 0, 300)
-Frame.Position = UDim2.new(0.5, -100, 0.5, -150)
-Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Frame.Parent = ScreenGui
-
-AutoFarmButton.Size = UDim2.new(0, 180, 0, 50)
-AutoFarmButton.Position = UDim2.new(0, 10, 0, 10)
-AutoFarmButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-AutoFarmButton.Text = "Auto Farm"
-AutoFarmButton.Parent = Frame
-
-local farming = false
-
--- Função de Auto Farm
-function autoFarm()
-    while farming do
-        -- Adicione aqui a lógica para derrotar inimigos ou coletar recursos
-        local enemies = game.Workspace:FindFirstChild("Enemies")
-        if enemies then
-            for _, enemy in pairs(enemies:GetChildren()) do
-                if enemy:IsA("Model") and enemy:FindFirstChild("Humanoid") then
-                    character.Humanoid:MoveTo(enemy.HumanoidRootPart.Position)
-                    wait(1) -- Espera 1 segundo antes de continuar o ataque
-                    -- Código para atacar o inimigo
-                end
+local function returnQuest(boolean)
+    local quest = getrenv()._G.x.GetRecommendedQuest(game.Players.LocalPlayer)
+    if (boolean) and quest:find('Bills Planet') then 
+        return 'SSJG Kakata'
+    else 
+        return quest 
+    end 
+end 
+local function transform()
+    pcall(function()
+        for i,v in pairs(Settings.Tables.Forms) do
+            if equipRemote:InvokeServer(v) then
+                break
             end
         end
-        wait(5) -- Espera 5 segundos antes de repetir a ação
-    end
+        repeat wait()
+            if plr.Character.Status.SelectedTransformation.Value ~= plr.Character.Status.Transformation.Value then
+                game:GetService("ReplicatedStorage").Package.Events.ta:InvokeServer()
+            end
+        until game.Players.LocalPlayer.Character.Status.SelectedTransformation.Value == game.Players.LocalPlayer.Character.Status.Transformation.Value
+    end)
 end
 
--- Conectar botão Auto Farm
-AutoFarmButton.MouseButton1Click:Connect(function()
-    farming = not farming
-    if farming then
-        AutoFarmButton.Text = "Parar Auto Farm"
-        autoFarm()
-    else
-        AutoFarmButton.Text = "Auto Farm"
-    end
+RunService.RenderStepped:Connect(function()
+    if Settings.Variables.Farm then 
+        plr.Character:WaitForChild('Humanoid'):ChangeState(11)
+    end 
 end)
+local RebirthFarm = Início.Toggle({
+    Text = 'Rebirth-Farm',
+    Callback = function(bool)
+        Settings.Variables.Farm = bool 
+        while bool and wait() do 
+            if (not plr.PlayerGui.Início.InícioFrame.Frames.Quest.Nop.Visible and bool) then
+                for i,v in next, workspace.Living:GetChildren() do 
+                    if (v.Name == returnQuest(true) or v.Name == game:GetService("ReplicatedStorage").Package.Quests[returnQuest(true)].Objective.Value) and not plr.PlayerGui.Início.InícioFrame.Frames.Quest.Nop.Visible and v:FindFirstChild('Humanoid') and v:FindFirstChild('HumanoidRootPart') and v.Humanoid.Health > 0 then 
+                        repeat wait()
+                            pcall(function() plr.Character.HumanoidRootPart.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0,0,2) end)
+                            punchRemote:FireServer('Blacknwhite27',1)
+                        until not v or not v:FindFirstChild('Humanoid') or not v:FindFirstChild('HumanoidRootPart') or v.Humanoid.Health <= 0 or not Settings.Variables.Farm or plr.PlayerGui:WaitForChild('Início').InícioFrame.Frames.Quest.Nop.Visible
+                    end 
+                end 
+            else 
+                pcall(function() questRemote:InvokeServer(workspace.Others.NPCs[returnQuest(true)]) end)
+            end 
+        end 
+    end
+})
+
+local GodMode = Início.Toggle({
+    Text = 'GodMode',
+    Callback = function(bool)
+        pcall(function()
+            if bool then
+                plr.Character.Status.Blocking.Parent = nil 
+            else
+                plr.Character.Humanoid.Health = -math.huge 
+            end
+        end)
+    end 
+})
+local AutoTransform = Início.Toggle({
+    Text = 'Auto-Transform',
+    Callback = function(bool)
+        pcall(function()
+            while bool and wait() do 
+                transform()
+            end
+        end)
+    end 
+})
+local AutoRebirth = Início.Toggle({
+    Text = 'Rebirth',
+    Callback = function(bool)
+        while bool and wait() do 
+            rebirthRemote:InvokeServer()
+        end 
+    end 
+})
+local AutoCharge = Início.Toggle({
+    Text = 'Auto-Charge',
+    Callback = function(bool) 
+        while bool and wait() do 
+            game:GetService("ReplicatedStorage").Package.Events.cha:InvokeServer('Blacknwhite27')
+        end
+    end 
+})
